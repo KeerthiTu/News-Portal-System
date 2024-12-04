@@ -1,0 +1,199 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class NewsPortal {
+    private JFrame frame;
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+    private HashMap<String, String> users = new HashMap<>();
+    private String currentUser = null;
+    private ArrayList<String> categories = new ArrayList<>();
+    private HashMap<String, ArrayList<String>> newsArticles = new HashMap<>();
+
+    public NewsPortal() {
+        categories.add("Politics");
+        categories.add("Sports");
+        categories.add("Technology");
+        for (String category : categories) {
+            newsArticles.put(category, new ArrayList<>());
+        }
+
+        frame = new JFrame("News Portal");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+
+        mainPanel.add(loginPanel(), "Login");
+        mainPanel.add(registerPanel(), "Register");
+        mainPanel.add(userDashboard(), "UserDashboard");
+        mainPanel.add(adminPanel(), "AdminDashboard");
+
+        frame.add(mainPanel);
+        cardLayout.show(mainPanel, "Login");
+        frame.setVisible(true);
+    }
+
+    private JPanel loginPanel() {
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JLabel lblUsername = new JLabel("Username:");
+        JLabel lblPassword = new JLabel("Password:");
+        JTextField txtUsername = new JTextField();
+        JPasswordField txtPassword = new JPasswordField();
+        JButton btnLogin = new JButton("Login");
+        JButton btnRegister = new JButton("Register");
+
+        btnLogin.addActionListener(e -> {
+            String username = txtUsername.getText();
+            String password = new String(txtPassword.getPassword());
+            if (users.containsKey(username) && users.get(username).equals(password)) {
+                currentUser = username;
+                if (username.equals("admin")) {
+                    cardLayout.show(mainPanel, "AdminDashboard");
+                } else {
+                    cardLayout.show(mainPanel, "UserDashboard");
+                }
+            } else {
+                JOptionPane.showMessageDialog(frame, "Invalid credentials!");
+            }
+        });
+
+        btnRegister.addActionListener(e -> cardLayout.show(mainPanel, "Register"));
+
+        panel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        panel.add(lblUsername);
+        panel.add(txtUsername);
+        panel.add(lblPassword);
+        panel.add(txtPassword);
+        panel.add(btnLogin);
+        panel.add(btnRegister);
+
+        return panel;
+    }
+
+    private JPanel registerPanel() {
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        JLabel lblUsername = new JLabel("Username:");
+        JLabel lblPassword = new JLabel("Password:");
+        JTextField txtUsername = new JTextField();
+        JPasswordField txtPassword = new JPasswordField();
+        JButton btnRegister = new JButton("Register");
+        JButton btnBack = new JButton("Back");
+
+        btnRegister.addActionListener(e -> {
+            String username = txtUsername.getText();
+            String password = new String(txtPassword.getPassword());
+            if (users.containsKey(username)) {
+                JOptionPane.showMessageDialog(frame, "Username already exists!");
+            } else {
+                users.put(username, password);
+                JOptionPane.showMessageDialog(frame, "Registration successful!");
+                cardLayout.show(mainPanel, "Login");
+            }
+        });
+
+        btnBack.addActionListener(e -> cardLayout.show(mainPanel, "Login"));
+
+        panel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        panel.add(lblUsername);
+        panel.add(txtUsername);
+        panel.add(lblPassword);
+        panel.add(txtPassword);
+        panel.add(btnRegister);
+        panel.add(btnBack);
+
+        return panel;
+    }
+
+    private JPanel userDashboard() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JComboBox<String> categoryBox = new JComboBox<>(categories.toArray(new String[0]));
+        JTextArea articleArea = new JTextArea();
+        articleArea.setEditable(false);
+        JButton btnLogout = new JButton("Logout");
+
+        categoryBox.addActionListener(e -> {
+            String selectedCategory = (String) categoryBox.getSelectedItem();
+            ArrayList<String> articles = newsArticles.get(selectedCategory);
+            articleArea.setText(String.join("\n\n", articles));
+        });
+
+        btnLogout.addActionListener(e -> {
+            currentUser = null;
+            cardLayout.show(mainPanel, "Login");
+        });
+
+        panel.add(categoryBox, BorderLayout.NORTH);
+        panel.add(new JScrollPane(articleArea), BorderLayout.CENTER);
+        panel.add(btnLogout, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel adminPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JComboBox<String> categoryBox = new JComboBox<>(categories.toArray(new String[0]));
+        JTextField txtArticle = new JTextField();
+        JButton btnAdd = new JButton("Add Article");
+        JButton btnRemove = new JButton("Remove Article");
+        JTextArea articleArea = new JTextArea();
+        articleArea.setEditable(false);
+        JButton btnLogout = new JButton("Logout");
+
+        btnAdd.addActionListener(e -> {
+            String selectedCategory = (String) categoryBox.getSelectedItem();
+            String article = txtArticle.getText();
+            if (!article.isEmpty()) {
+                newsArticles.get(selectedCategory).add(article);
+                txtArticle.setText("");
+                JOptionPane.showMessageDialog(frame, "Article added!");
+            }
+        });
+
+        btnRemove.addActionListener(e -> {
+            String selectedCategory = (String) categoryBox.getSelectedItem();
+            String article = txtArticle.getText();
+            if (newsArticles.get(selectedCategory).remove(article)) {
+                JOptionPane.showMessageDialog(frame, "Article removed!");
+            } else {
+                JOptionPane.showMessageDialog(frame, "Article not found!");
+            }
+        });
+
+        btnLogout.addActionListener(e -> {
+            currentUser = null;
+            cardLayout.show(mainPanel, "Login");
+        });
+
+        categoryBox.addActionListener(e -> {
+            String selectedCategory = (String) categoryBox.getSelectedItem();
+            ArrayList<String> articles = newsArticles.get(selectedCategory);
+            articleArea.setText(String.join("\n\n", articles));
+        });
+
+        JPanel topPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        topPanel.add(new JLabel("Category:"));
+        topPanel.add(categoryBox);
+        topPanel.add(new JLabel("Article:"));
+        topPanel.add(txtArticle);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        buttonPanel.add(btnAdd);
+        buttonPanel.add(btnRemove);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(new JScrollPane(articleArea), BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        panel.add(btnLogout, BorderLayout.PAGE_END);
+
+        return panel;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(NewsPortal::new);
+    }
+}
